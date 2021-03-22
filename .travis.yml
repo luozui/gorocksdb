@@ -29,7 +29,7 @@ install:
   - go get -t -tags rocksdb_6_16 ./...
 
 script:
-  - go test -v -tags rocksdb_6_16 ./
+  - GODEBUG=cgocheck=2 go test -v -tags rocksdb_6_16 ./
 
 notifications:
   email:
