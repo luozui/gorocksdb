@@ -51,7 +51,7 @@ jobs:
 
       - name: Test v6.16 or later
         if: startsWith(matrix.os, 'macos-')
-        run: go test -v -tags rocksdb_6_16
+        run: go test -v -tags rocksdb_6,rocksdb_6_16
 
   golangci:
     name: lint

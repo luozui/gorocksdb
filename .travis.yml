@@ -26,10 +26,10 @@ install:
   - sudo cp --preserve=links ./librocksdb.* /usr/lib/
   - sudo cp -r ./include/rocksdb/ /usr/include/
   - popd
-  - go get -t -tags rocksdb_6_16 ./...
+  - go get -t -tags rocksdb_6,rocksdb_6_16 ./...
 
 script:
-  - GODEBUG=cgocheck=2 go test -v -tags rocksdb_6_16 ./
+  - GODEBUG=cgocheck=2 go test -v -tags rocksdb_6,rocksdb_6_16 ./
 
 notifications:
   email:
