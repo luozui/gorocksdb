@@ -30,3 +30,20 @@ func (transaction *Transaction) GetForUpdateCF(opts *ReadOptions, cf *ColumnFami
 	}
 	return NewSlice(cValue, cValLen), nil
 }
+
+// Merge merges the data associated with the key with the actual data in the database.
+func (transaction *Transaction) MergeCF(cf *ColumnFamilyHandle, key []byte, value []byte) error {
+	var (
+		cErr   *C.char
+		cKey   = byteToChar(key)
+		cValue = byteToChar(value)
+	)
+	C.rocksdb_transaction_merge_cf(transaction.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return errors.New(C.GoString(cErr))
+	}
+	return nil
+}

@@ -6,8 +6,8 @@ import "C"
 
 import (
 	"errors"
-	"unsafe"
 	"runtime"
+	"unsafe"
 )
 
 // Transaction is used with TransactionDB for transaction support.
@@ -177,6 +177,8 @@ func (transaction *Transaction) Merge(key []byte, value []byte) error {
 		cValue = byteToChar(value)
 	)
 	C.rocksdb_transaction_merge(transaction.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))

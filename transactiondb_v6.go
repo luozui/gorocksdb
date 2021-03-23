@@ -4,6 +4,7 @@ package gorocksdb
 
 import (
 	"errors"
+	"runtime"
 	"unsafe"
 )
 
@@ -71,6 +72,23 @@ func OpenTransactionDbColumnFamilies(
 		opts:              opts,
 		transactionDBOpts: transactionDBOpts,
 	}, cfHandles, nil
+}
+
+// Merge merges the data associated with the key with the actual data in the database.
+func (db *TransactionDB) MergeCF(opts *WriteOptions, cf *ColumnFamilyHandle, key []byte, value []byte) error {
+	var (
+		cErr   *C.char
+		cKey   = byteToChar(key)
+		cValue = byteToChar(value)
+	)
+	C.rocksdb_transactiondb_merge_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return errors.New(C.GoString(cErr))
+	}
+	return nil
 }
 
 // NewIterator returns an Iterator over the database that uses the
