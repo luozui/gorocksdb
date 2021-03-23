@@ -120,6 +120,21 @@ func (db *TransactionDB) Delete(opts *WriteOptions, key []byte) error {
 	return nil
 }
 
+// Merge merges the data associated with the key with the actual data in the database.
+func (db *TransactionDB) Merge(opts *WriteOptions, key []byte, value []byte) error {
+	var (
+		cErr   *C.char
+		cKey   = byteToChar(key)
+		cValue = byteToChar(value)
+	)
+	C.rocksdb_transactiondb_merge(db.c, opts.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return errors.New(C.GoString(cErr))
+	}
+	return nil
+}
+
 // NewCheckpoint creates a new Checkpoint for this db.
 func (db *TransactionDB) NewCheckpoint() (*Checkpoint, error) {
 	var (

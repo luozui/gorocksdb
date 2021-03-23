@@ -111,6 +111,21 @@ func (transaction *Transaction) Delete(key []byte) error {
 	return nil
 }
 
+// Merge merges the data associated with the key with the actual data in the database.
+func (transaction *Transaction) Merge(key []byte, value []byte) error {
+	var (
+		cErr   *C.char
+		cKey   = byteToChar(key)
+		cValue = byteToChar(value)
+	)
+	C.rocksdb_transaction_merge(transaction.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return errors.New(C.GoString(cErr))
+	}
+	return nil
+}
+
 // NewIterator returns an Iterator over the database that uses the
 // ReadOptions given.
 func (transaction *Transaction) NewIterator(opts *ReadOptions) *Iterator {
