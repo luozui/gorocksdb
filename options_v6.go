@@ -5,6 +5,10 @@ package gorocksdb
 // #include "rocksdb/c.h"
 import "C"
 
+func (opts *Options) Clone() *Options {
+	return NewNativeOptions(C.rocksdb_options_create_copy(opts.c))
+}
+
 // SetAtomicFlush sets atomic_flush
 // If true, RocksDB supports flushing multiple column families and committing
 // their results atomically to MANIFEST. Note that it is not
