@@ -1,4 +1,4 @@
-// +build rocksdb_v6
+// +build !rocksdb_v5
 
 package gorocksdb
 
