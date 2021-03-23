@@ -6,6 +6,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"unsafe"
 )
 
@@ -255,6 +256,7 @@ func (db *DB) Get(opts *ReadOptions, key []byte) (*Slice, error) {
 		cKey    = byteToChar(key)
 	)
 	cValue := C.rocksdb_get(db.c, opts.c, cKey, C.size_t(len(key)), &cValLen, &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -270,6 +272,7 @@ func (db *DB) GetBytes(opts *ReadOptions, key []byte) ([]byte, error) {
 		cKey    = byteToChar(key)
 	)
 	cValue := C.rocksdb_get(db.c, opts.c, cKey, C.size_t(len(key)), &cValLen, &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -289,6 +292,7 @@ func (db *DB) GetCF(opts *ReadOptions, cf *ColumnFamilyHandle, key []byte) (*Sli
 		cKey    = byteToChar(key)
 	)
 	cValue := C.rocksdb_get_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), &cValLen, &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -303,6 +307,7 @@ func (db *DB) GetPinned(opts *ReadOptions, key []byte) (*PinnableSliceHandle, er
 		cKey = byteToChar(key)
 	)
 	cHandle := C.rocksdb_get_pinned(db.c, opts.c, cKey, C.size_t(len(key)), &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -411,6 +416,8 @@ func (db *DB) Put(opts *WriteOptions, key, value []byte) error {
 		cValue = byteToChar(value)
 	)
 	C.rocksdb_put(db.c, opts.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -426,6 +433,8 @@ func (db *DB) PutCF(opts *WriteOptions, cf *ColumnFamilyHandle, key, value []byt
 		cValue = byteToChar(value)
 	)
 	C.rocksdb_put_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -440,6 +449,7 @@ func (db *DB) Delete(opts *WriteOptions, key []byte) error {
 		cKey = byteToChar(key)
 	)
 	C.rocksdb_delete(db.c, opts.c, cKey, C.size_t(len(key)), &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -454,6 +464,7 @@ func (db *DB) DeleteCF(opts *WriteOptions, cf *ColumnFamilyHandle, key []byte) e
 		cKey = byteToChar(key)
 	)
 	C.rocksdb_delete_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -469,6 +480,8 @@ func (db *DB) Merge(opts *WriteOptions, key []byte, value []byte) error {
 		cValue = byteToChar(value)
 	)
 	C.rocksdb_merge(db.c, opts.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -485,6 +498,8 @@ func (db *DB) MergeCF(opts *WriteOptions, cf *ColumnFamilyHandle, key []byte, va
 		cValue = byteToChar(value)
 	)
 	C.rocksdb_merge_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -658,6 +673,7 @@ func (db *DB) CompactRange(r Range) {
 	cStart := byteToChar(r.Start)
 	cLimit := byteToChar(r.Limit)
 	C.rocksdb_compact_range(db.c, cStart, C.size_t(len(r.Start)), cLimit, C.size_t(len(r.Limit)))
+	runtime.KeepAlive(r)
 }
 
 // CompactRangeCF runs a manual compaction on the Range of keys given on the
@@ -666,6 +682,7 @@ func (db *DB) CompactRangeCF(cf *ColumnFamilyHandle, r Range) {
 	cStart := byteToChar(r.Start)
 	cLimit := byteToChar(r.Limit)
 	C.rocksdb_compact_range_cf(db.c, cf.c, cStart, C.size_t(len(r.Start)), cLimit, C.size_t(len(r.Limit)))
+	runtime.KeepAlive(r)
 }
 
 // Flush triggers a manuel flush for the database.
@@ -723,6 +740,7 @@ func (db *DB) DeleteFileInRange(r Range) error {
 		cLimitKey, C.size_t(len(r.Limit)),
 		&cErr,
 	)
+	runtime.KeepAlive(r)
 
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
@@ -746,6 +764,7 @@ func (db *DB) DeleteFileInRangeCF(cf *ColumnFamilyHandle, r Range) error {
 		cLimitKey, C.size_t(len(r.Limit)),
 		&cErr,
 	)
+	runtime.KeepAlive(r)
 
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))

@@ -1,5 +1,6 @@
 package gorocksdb
 
+// #include <stdlib.h>
 // #include "rocksdb/c.h"
 import "C"
 import (
@@ -25,7 +26,9 @@ const (
 // ReadOptions represent all of the available options when reading from a
 // database.
 type ReadOptions struct {
-	c *C.rocksdb_readoptions_t
+	c                  *C.rocksdb_readoptions_t
+	cIterateLowerBound *C.char
+	cIterateUpperBound *C.char
 }
 
 // NewDefaultReadOptions creates a default ReadOptions object.
@@ -35,7 +38,7 @@ func NewDefaultReadOptions() *ReadOptions {
 
 // NewNativeReadOptions creates a ReadOptions object.
 func NewNativeReadOptions(c *C.rocksdb_readoptions_t) *ReadOptions {
-	return &ReadOptions{c}
+	return &ReadOptions{c: c}
 }
 
 // UnsafeGetReadOptions returns the underlying c read options object.
@@ -106,9 +109,35 @@ func (opts *ReadOptions) SetTailing(value bool) {
 // implemented.
 // Default: nullptr
 func (opts *ReadOptions) SetIterateUpperBound(key []byte) {
-	cKey := byteToChar(key)
+	C.free(unsafe.Pointer(opts.cIterateUpperBound))
+	if key == nil {
+		opts.cIterateUpperBound = nil
+	} else {
+		opts.cIterateUpperBound = cByteSlice(key)
+	}
 	cKeyLen := C.size_t(len(key))
-	C.rocksdb_readoptions_set_iterate_upper_bound(opts.c, cKey, cKeyLen)
+	C.rocksdb_readoptions_set_iterate_upper_bound(opts.c, opts.cIterateUpperBound, cKeyLen)
+}
+
+// SetIterateLowerBound specifies "iterate_lower_bound", which defines
+// the smallest key at which the backward iterator can return an entry.
+// Once the bound is passed, Valid() will be false.
+// `iterate_lower_bound` is inclusive ie the bound value is a valid entry.
+//
+// If prefix_extractor is not null, the Seek target and `iterate_lower_bound`
+// need to have the same prefix. This is because ordering is not guaranteed
+// outside of prefix domain.
+//
+// Default: nullptr
+func (opts *ReadOptions) SetIterateLowerBound(key []byte) {
+	C.free(unsafe.Pointer(opts.cIterateLowerBound))
+	if key == nil {
+		opts.cIterateLowerBound = nil
+	} else {
+		opts.cIterateLowerBound = cByteSlice(key)
+	}
+	cKeyLen := C.size_t(len(key))
+	C.rocksdb_readoptions_set_iterate_lower_bound(opts.c, opts.cIterateLowerBound, cKeyLen)
 }
 
 // SetPinData specifies the value of "pin_data". If true, it keeps the blocks
@@ -173,5 +202,9 @@ func (opts *ReadOptions) SetIgnoreRangeDeletions(value bool) {
 // Destroy deallocates the ReadOptions object.
 func (opts *ReadOptions) Destroy() {
 	C.rocksdb_readoptions_destroy(opts.c)
+	C.free(unsafe.Pointer(opts.cIterateLowerBound))
+	C.free(unsafe.Pointer(opts.cIterateUpperBound))
 	opts.c = nil
+	opts.cIterateLowerBound = nil
+	opts.cIterateUpperBound = nil
 }

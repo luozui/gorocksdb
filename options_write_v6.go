@@ -2,6 +2,7 @@
 
 package gorocksdb
 
+// #include "rocksdb/c.h"
 import "C"
 
 // SetMemtableInsertHintPerBatch specifies the value of "memtable_insert_hint_per_batch".

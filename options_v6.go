@@ -2,6 +2,9 @@
 
 package gorocksdb
 
+// #include "rocksdb/c.h"
+import "C"
+
 // SetAtomicFlush sets atomic_flush
 // If true, RocksDB supports flushing multiple column families and committing
 // their results atomically to MANIFEST. Note that it is not

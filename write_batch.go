@@ -5,6 +5,7 @@ import "C"
 import (
 	"errors"
 	"io"
+	"runtime"
 )
 
 // WriteBatch is a batching of Puts, Merges and Deletes.
@@ -32,6 +33,8 @@ func (wb *WriteBatch) Put(key, value []byte) {
 	cKey := byteToChar(key)
 	cValue := byteToChar(value)
 	C.rocksdb_writebatch_put(wb.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)))
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 }
 
 // PutCF queues a key-value pair in a column family.
@@ -39,12 +42,15 @@ func (wb *WriteBatch) PutCF(cf *ColumnFamilyHandle, key, value []byte) {
 	cKey := byteToChar(key)
 	cValue := byteToChar(value)
 	C.rocksdb_writebatch_put_cf(wb.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)))
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 }
 
 // Append a blob of arbitrary size to the records in this batch.
 func (wb *WriteBatch) PutLogData(blob []byte) {
 	cBlob := byteToChar(blob)
 	C.rocksdb_writebatch_put_log_data(wb.c, cBlob, C.size_t(len(blob)))
+	runtime.KeepAlive(blob)
 }
 
 // Merge queues a merge of "value" with the existing value of "key".
@@ -52,6 +58,8 @@ func (wb *WriteBatch) Merge(key, value []byte) {
 	cKey := byteToChar(key)
 	cValue := byteToChar(value)
 	C.rocksdb_writebatch_merge(wb.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)))
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 }
 
 // MergeCF queues a merge of "value" with the existing value of "key" in a
@@ -60,18 +68,22 @@ func (wb *WriteBatch) MergeCF(cf *ColumnFamilyHandle, key, value []byte) {
 	cKey := byteToChar(key)
 	cValue := byteToChar(value)
 	C.rocksdb_writebatch_merge_cf(wb.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)))
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 }
 
 // Delete queues a deletion of the data at key.
 func (wb *WriteBatch) Delete(key []byte) {
 	cKey := byteToChar(key)
 	C.rocksdb_writebatch_delete(wb.c, cKey, C.size_t(len(key)))
+	runtime.KeepAlive(key)
 }
 
 // DeleteCF queues a deletion of the data at key in a column family.
 func (wb *WriteBatch) DeleteCF(cf *ColumnFamilyHandle, key []byte) {
 	cKey := byteToChar(key)
 	C.rocksdb_writebatch_delete_cf(wb.c, cf.c, cKey, C.size_t(len(key)))
+	runtime.KeepAlive(key)
 }
 
 // DeleteRange deletes keys that are between [startKey, endKey)
@@ -79,6 +91,8 @@ func (wb *WriteBatch) DeleteRange(startKey []byte, endKey []byte) {
 	cStartKey := byteToChar(startKey)
 	cEndKey := byteToChar(endKey)
 	C.rocksdb_writebatch_delete_range(wb.c, cStartKey, C.size_t(len(startKey)), cEndKey, C.size_t(len(endKey)))
+	runtime.KeepAlive(startKey)
+	runtime.KeepAlive(endKey)
 }
 
 // DeleteRangeCF deletes keys that are between [startKey, endKey) and
@@ -87,6 +101,8 @@ func (wb *WriteBatch) DeleteRangeCF(cf *ColumnFamilyHandle, startKey []byte, end
 	cStartKey := byteToChar(startKey)
 	cEndKey := byteToChar(endKey)
 	C.rocksdb_writebatch_delete_range_cf(wb.c, cf.c, cStartKey, C.size_t(len(startKey)), cEndKey, C.size_t(len(endKey)))
+	runtime.KeepAlive(startKey)
+	runtime.KeepAlive(endKey)
 }
 
 // Data returns the serialized version of this batch.

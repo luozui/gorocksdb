@@ -4,8 +4,11 @@ package gorocksdb
 
 import (
 	"errors"
+	"unsafe"
 )
 
+// #include <stdlib.h>
+// #include "rocksdb/c.h"
 import "C"
 
 // OpenTransactionDbColumnFamilies opens a database with the specified options.

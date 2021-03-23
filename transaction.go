@@ -7,6 +7,7 @@ import "C"
 import (
 	"errors"
 	"unsafe"
+	"runtime"
 )
 
 // Transaction is used with TransactionDB for transaction support.
@@ -56,6 +57,7 @@ func (transaction *Transaction) Get(opts *ReadOptions, key []byte) (*Slice, erro
 	cValue := C.rocksdb_transaction_get(
 		transaction.c, opts.c, cKey, C.size_t(len(key)), &cValLen, &cErr,
 	)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -73,6 +75,7 @@ func (transaction *Transaction) GetCF(opts *ReadOptions, cf *ColumnFamilyHandle,
 	cValue := C.rocksdb_transaction_get_cf(
 		transaction.c, opts.c, cf.c, cKey, C.size_t(len(key)), &cValLen, &cErr,
 	)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -90,6 +93,7 @@ func (transaction *Transaction) GetForUpdate(opts *ReadOptions, key []byte) (*Sl
 	cValue := C.rocksdb_transaction_get_for_update(
 		transaction.c, opts.c, cKey, C.size_t(len(key)), &cValLen, C.uchar(byte(1)) /*exclusive*/, &cErr,
 	)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
@@ -107,6 +111,8 @@ func (transaction *Transaction) Put(key, value []byte) error {
 	C.rocksdb_transaction_put(
 		transaction.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr,
 	)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -124,6 +130,8 @@ func (transaction *Transaction) PutCF(cf *ColumnFamilyHandle, key, value []byte)
 	C.rocksdb_transaction_put_cf(
 		transaction.c, cf.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr,
 	)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -138,6 +146,7 @@ func (transaction *Transaction) Delete(key []byte) error {
 		cKey = byteToChar(key)
 	)
 	C.rocksdb_transaction_delete(transaction.c, cKey, C.size_t(len(key)), &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
@@ -152,6 +161,7 @@ func (transaction *Transaction) DeleteCF(cf *ColumnFamilyHandle, key []byte) err
 		cKey = byteToChar(key)
 	)
 	C.rocksdb_transaction_delete_cf(transaction.c, cf.c, cKey, C.size_t(len(key)), &cErr)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))

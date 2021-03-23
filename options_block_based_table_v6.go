@@ -2,6 +2,7 @@
 
 package gorocksdb
 
+// #include "rocksdb/c.h"
 import "C"
 
 // DataBlockIndexType specifies the index type that will be used for the data block.

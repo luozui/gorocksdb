@@ -2,8 +2,12 @@
 
 package gorocksdb
 
+// #include "rocksdb/c.h"
+import "C"
+
 import (
 	"errors"
+	"unsafe"
 )
 
 import "C"
@@ -18,6 +22,7 @@ func (transaction *Transaction) GetForUpdateCF(opts *ReadOptions, cf *ColumnFami
 	cValue := C.rocksdb_transaction_get_for_update_cf(
 		transaction.c, opts.c, cf.c, cKey, C.size_t(len(key)), &cValLen, C.uchar(byte(1)) /*exclusive*/, &cErr,
 	)
+	runtime.KeepAlive(key)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return nil, errors.New(C.GoString(cErr))
