@@ -5,8 +5,8 @@ package gorocksdb
 import "C"
 import (
 	"errors"
-	"unsafe"
 	"runtime"
+	"unsafe"
 )
 
 // TransactionDB is a reusable handle to a RocksDB transactional database on disk, created by OpenTransactionDb.
@@ -189,6 +189,23 @@ func (db *TransactionDB) DeleteCF(opts *WriteOptions, cf *ColumnFamilyHandle, ke
 	)
 	C.rocksdb_transactiondb_delete_cf(db.c, opts.c, cf.c, cKey, C.size_t(len(key)), &cErr)
 	runtime.KeepAlive(key)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return errors.New(C.GoString(cErr))
+	}
+	return nil
+}
+
+// Merge merges the data associated with the key with the actual data in the database.
+func (db *TransactionDB) Merge(opts *WriteOptions, key []byte, value []byte) error {
+	var (
+		cErr   *C.char
+		cKey   = byteToChar(key)
+		cValue = byteToChar(value)
+	)
+	C.rocksdb_transactiondb_merge(db.c, opts.c, cKey, C.size_t(len(key)), cValue, C.size_t(len(value)), &cErr)
+	runtime.KeepAlive(key)
+	runtime.KeepAlive(value)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
 		return errors.New(C.GoString(cErr))
