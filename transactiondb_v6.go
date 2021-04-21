@@ -19,24 +19,11 @@ func OpenTransactionDbColumnFamilies(
 	name string,
 	cfNames []string,
 	cfOpts []*Options,
-) (*TransactionDB, []*ColumnFamilyHandle, error) {
+) (db *TransactionDB, cfHandles []*ColumnFamilyHandle, err error) {
 	numColumnFamilies := len(cfNames)
 	if numColumnFamilies != len(cfOpts) {
-		return nil, nil, errors.New("must provide the same number of column family names and options")
-	}
-	cNames := make([]*C.char, numColumnFamilies)
-	for i, s := range cfNames {
-		cNames[i] = C.CString(s)
-	}
-	defer func() {
-		for _, s := range cNames {
-			C.free(unsafe.Pointer(s))
-		}
-	}()
-
-	cOpts := make([]*C.rocksdb_options_t, numColumnFamilies)
-	for i, o := range cfOpts {
-		cOpts[i] = o.c
+		err = errors.New("must provide the same number of column family names and options")
+		return
 	}
 
 	var (
@@ -45,33 +32,57 @@ func OpenTransactionDbColumnFamilies(
 	)
 	defer C.free(unsafe.Pointer(cName))
 
+	cNames := make([]*C.char, numColumnFamilies)
+	cOpts := make([]*C.rocksdb_options_t, numColumnFamilies)
 	cHandles := make([]*C.rocksdb_column_family_handle_t, numColumnFamilies)
 
-	db := C.rocksdb_transactiondb_open_column_families(
+	var pNames **C.char
+	var pOpts **C.rocksdb_options_t
+	var pHandles **C.rocksdb_column_family_handle_t
+
+	if numColumnFamilies > 0 {
+		for i, s := range cfNames {
+			cNames[i] = C.CString(s)
+		}
+		defer func() {
+			for _, s := range cNames {
+				C.free(unsafe.Pointer(s))
+			}
+		}()
+
+		for i, o := range cfOpts {
+			cOpts[i] = o.c
+		}
+
+		pNames = &cNames[0]
+		pOpts = &cOpts[0]
+		pHandles = &cHandles[0]
+	}
+
+	c := C.rocksdb_transactiondb_open_column_families(
 		opts.c,
 		transactionDBOpts.c,
 		cName,
 		C.int(numColumnFamilies),
-		&cNames[0],
-		&cOpts[0],
-		&cHandles[0],
+		pNames,
+		pOpts,
+		pHandles,
 		&cErr)
+
+	runtime.KeepAlive(cNames)
+	runtime.KeepAlive(cOpts)
+	runtime.KeepAlive(cHandles)
+
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
-		return nil, nil, errors.New(C.GoString(cErr))
+		err = errors.New(C.GoString(cErr))
+	} else {
+		db = &TransactionDB{c, name, opts, transactionDBOpts}
+		for i, c := range cHandles {
+			cfHandles[i] = NewNativeColumnFamilyHandle(c)
+		}
 	}
-
-	cfHandles := make([]*ColumnFamilyHandle, numColumnFamilies)
-	for i, c := range cHandles {
-		cfHandles[i] = NewNativeColumnFamilyHandle(c)
-	}
-
-	return &TransactionDB{
-		name:              name,
-		c:                 db,
-		opts:              opts,
-		transactionDBOpts: transactionDBOpts,
-	}, cfHandles, nil
+	return
 }
 
 // Merge merges the data associated with the key with the actual data in the database.
