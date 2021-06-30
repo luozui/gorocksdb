@@ -1,6 +1,6 @@
-module github.com/flier/gorocksdb
+module github.com/luozui/gorocksdb
 
-go 1.13
+go 1.16
 
 require (
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c
