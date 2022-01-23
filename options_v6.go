@@ -115,7 +115,7 @@ func (opts *Options) SetSkipCheckingSstFileSizesOnDbOpen(value bool) {
 // if not zero, dump rocksdb.stats to RocksDB every stats_persist_period_sec
 // Default: 600
 func (opts *Options) SetStatsPersistPeriodSec(value int) {
-	C.rocksdb_options_set_stats_persist_period_sec(opts.c, C.uint(value))
+	// C.rocksdb_options_set_stats_persist_period_sec(opts.c, C.uint(value))
 }
 
 // SetUnorderedWrite enables unordered write
